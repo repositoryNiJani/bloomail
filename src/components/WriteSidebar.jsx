@@ -27,11 +27,11 @@ export default function WriteSidebar() {
           <span>Message</span>
           <textarea
             id="fMsg"
-            maxLength="500"
+            maxLength="1000"
             rows="5"
             placeholder="Write something sweet, or tap an occasion above for a head start."
           />
-          <small className="count" id="cnt">0 / 500</small>
+          <small className="count" id="cnt">0 / 1000</small>
         </label>
         <label className="field">
           <span>From</span>
