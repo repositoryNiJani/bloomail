@@ -58,21 +58,37 @@ export default function FlowerStage() {
       </div>
 
       <div className="letter" id="letter">
-        <div className="l-occ" id="lOcc"></div>
-        <div className="l-to" id="lTo"></div>
-        <p className="l-msg" id="lMsg"></p>
-        <div className="l-from" id="lFrom"></div>
-        <div id="lEmbed"></div>
-        <div className="l-actions">
-          <button className="chip" id="rxBooth" type="button">
-            <span className="ic" data-i="camera"></span>
-            Photobooth
+        <button
+          className="letter-toggle"
+          id="letterToggle"
+          type="button"
+          aria-label="Open your letter"
+          aria-expanded="false"
+        >
+          <span className="letter-envelope-icon" aria-hidden="true"></span>
+          <span>Read letter</span>
+          <span className="letter-hint" aria-hidden="true">Open this</span>
+        </button>
+        <div className="letter-content" id="letterContent">
+          <button className="letter-collapse" id="letterCollapse" type="button" aria-label="Close your letter">
+            <span className="ic" data-i="x"></span>
           </button>
-          <button className="chip" id="rxSound" type="button" aria-label="Toggle sound"></button>
-          <button className="chip" id="rxNew" type="button">
-            <span className="ic" data-i="send"></span>
-            Send one back
-          </button>
+          <div className="l-occ" id="lOcc"></div>
+          <div className="l-to" id="lTo"></div>
+          <p className="l-msg" id="lMsg"></p>
+          <div className="l-from" id="lFrom"></div>
+          <div id="lEmbed"></div>
+          <div className="l-actions">
+            <button className="chip" id="rxBooth" type="button">
+              <span className="ic" data-i="camera"></span>
+              Photobooth
+            </button>
+            <button className="chip" id="rxSound" type="button" aria-label="Toggle sound"></button>
+            <button className="chip" id="rxNew" type="button">
+              <span className="ic" data-i="send"></span>
+              Send one back
+            </button>
+          </div>
         </div>
       </div>
     </main>

@@ -1,10 +1,13 @@
 import React from 'react';
+import GitHubStarsCard from './GitHubStarsCard.jsx';
 
 export default function DesignSidebar() {
   return (
     <aside className="panel panel-design" id="pDesign">
       <div className="brand">
-        <div className="logo" id="logo"></div>
+        <div className="logo">
+          <img src="/bloomail-logo.svg" alt="" />
+        </div>
         <div>
           <b>bloomail</b>
           <small>send a flower, say it softer</small>
@@ -64,6 +67,8 @@ export default function DesignSidebar() {
         <span className="ic" data-i="dice"></span>
         Surprise me
       </button>
+
+      <GitHubStarsCard />
     </aside>
   );
 }

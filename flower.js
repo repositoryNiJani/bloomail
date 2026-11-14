@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import QRCode from 'qrcode';
 
 (()=>{
 'use strict';
@@ -520,7 +521,8 @@ const camPos=new THREE.Vector3(0,.7,6.2), camLook=new THREE.Vector3(0,-.2,0), go
 let rotY=0, zoom=1, dragging=false, lastX=0, downX=0, downY=0;
 function setGoal(){
   const pr=PRESETS[state.m], l=new THREE.Vector3(...pr.l), off=new THREE.Vector3(...pr.p).sub(l), a=camera.aspect;
-  off.multiplyScalar((a<1?1+(1-a)*.9:1)*zoom); goalLook.copy(l); goalPos.copy(l).add(off);
+  const mobileScale=innerWidth<=900?1.25:1;
+  off.multiplyScalar((a<1?1+(1-a)*.9:1)*mobileScale*zoom); goalLook.copy(l); goalPos.copy(l).add(off);
 }
 function resize(){
   const w=stage.clientWidth,h=stage.clientHeight; if(!w||!h) return;
@@ -584,7 +586,6 @@ const stageCenter=()=>{const r=stage.getBoundingClientRect();return [r.left+r.wi
 function swatch(hex,name,id){const b=document.createElement('button'); b.type='button'; b.className='sw'; b.dataset.id=id; b.style.background=hex; b.title=name||id; b.setAttribute('aria-label',name||id); return b;}
 function createUI(){
   $$('[data-i]').forEach(el=>{el.innerHTML=IC[el.dataset.i]||'';});
-  $('#logo').innerHTML=fIcon('daisy');
   const tiles=$('#tiles');
   FLOWERS.forEach(f=>{const b=document.createElement('button'); b.type='button'; b.className='tile'; b.dataset.id=f.id;
     b.innerHTML='<span class="fi">'+fIcon(f.id)+'</span><span class="n">'+f.name+'</span>';
@@ -714,14 +715,38 @@ const closeSheet=()=>$('#sheet').classList.remove('show');
 $('#sheetX').onclick=closeSheet; $('#sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet();});
 $('#copyBtn').onclick=()=>copyText($('#linkOut').value);
 $('#linkOut').addEventListener('focus',e=>e.target.select());
-$('#shareBtn').onclick=async()=>{
-  const url=makeLink();
-  if(navigator.share){try{await navigator.share({title:'A flower for you',text:state.to?'A flower for '+state.to:'A flower for you',url});}catch(e){}}
-  else copyText(url);
-};
+// $('#shareBtn').onclick=async()=>{
+//   const url=makeLink();
+//   if(navigator.share){try{await navigator.share({title:'A flower for you',text:state.to?'A flower for '+state.to:'A flower for you',url});}catch(e){}}
+//   else copyText(url);
+// };
 $('#mailBtn').onclick=()=>{
-  const url=makeLink(), body=(state.to?'Hi '+state.to+',\n\n':'')+'Someone made you a little flower. Open the envelope and watch it bloom:\n\n'+url+'\n\n'+(state.fr?'- '+state.fr:'');
-  location.href='mailto:?subject='+encodeURIComponent('A flower for you')+'&body='+encodeURIComponent(body);
+ const url=makeLink(), body=(state.to?'Hi '+state.to+',\n\n':'')+'Someone made you a little flower. Open the envelope and watch it bloom:\n\n'+url+'\n\n'+(state.fr?'- '+state.fr:'');
+ location.href='mailto:?subject='+encodeURIComponent('A flower for you')+'&body='+encodeURIComponent(body);
+};
+$('#qrBtn').onclick=async()=>{
+  try{
+    const dataUrl=await QRCode.toDataURL(makeLink(),{
+      errorCorrectionLevel:'M',
+      margin:2,
+      width:640,
+      color:{dark:'#2d2233',light:'#fff8f6'}
+    });
+    const base64=dataUrl.slice(dataUrl.indexOf(',')+1), binary=atob(base64), bytes=new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+    const qrUrl=URL.createObjectURL(new Blob([bytes],{type:'image/png'}));
+    const link=document.createElement('a');
+    link.href=qrUrl;
+    link.download='bloomail-qr-code.png';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(()=>URL.revokeObjectURL(qrUrl),4000);
+    toast('QR code downloaded');
+  }catch(error){
+    console.error('Failed to generate the share QR code.',error);
+    toast('Could not download QR code. Please try again.');
+  }
 };
 $('#prevBtn').onclick=()=>{closeSheet();enterReceiver(true);};
 $('#boothBtn').onclick=()=>{closeSheet();openBooth();};
@@ -737,7 +762,7 @@ function enterReceiver(isPreview){
   receiving=true; preview=!!isPreview; stopMusic();
   document.body.classList.add('receiving'); document.body.classList.toggle('preview',preview);
   build(); animating=false; setBloom(0);
-  $('#letter').classList.remove('show'); $('#lEmbed').innerHTML='';
+  $('#letter').classList.remove('show','expanded','closing'); $('#letterToggle').setAttribute('aria-expanded','false'); $('#lEmbed').innerHTML='';
   $('#envFor').textContent=state.to?'A flower for '+state.to:'A flower for you';
   const env=$('#env'); env.classList.remove('open'); const w=$('#envWrap'); w.classList.remove('hide'); w.classList.add('show');
   const emb=embedFor(state.ml); $('#rxSound').hidden=!!emb||state.mu==='none'; soundIcon();
@@ -762,6 +787,21 @@ function showLetter(){
   if(emb){const f=document.createElement('iframe'); f.src=emb.src; f.height=emb.h; f.allow='autoplay; encrypted-media; clipboard-write'; f.loading='lazy'; f.referrerPolicy='strict-origin-when-cross-origin'; box.appendChild(f);}
   shower();
 }
+function closeLetter(){
+  const letter=$('#letter');
+  if(!letter.classList.contains('expanded')) return;
+  letter.classList.add('closing');
+  $('#letterToggle').setAttribute('aria-expanded','false');
+  setTimeout(()=>letter.classList.remove('expanded','closing'),reduce?20:340);
+}
+$('#letterToggle').onclick=()=>{
+  const letter=$('#letter');
+  if(letter.classList.contains('expanded')){closeLetter();return;}
+  letter.classList.remove('closing');
+  letter.classList.add('expanded');
+  $('#letterToggle').setAttribute('aria-expanded','true');
+};
+$('#letterCollapse').onclick=closeLetter;
 $('#rxSound').onclick=()=>{setMuted(!audio.muted);soundIcon();};
 $('#rxBooth').onclick=openBooth;
 $('#rxNew').onclick=()=>{location.href=location.href.split('#')[0];};
@@ -800,7 +840,7 @@ function drawBooth(c,tm){
   const vw=bVideo.videoWidth||W, vh=bVideo.videoHeight||H, s=Math.max(W/vw,H/vh), dw=vw*s, dh=vh*s;
   c.fillStyle='#2d2233'; c.fillRect(0,0,W,H);
   if(bVideo.videoWidth){c.save(); c.translate(W,0); c.scale(-1,1); c.drawImage(bVideo,(W-dw)/2,(H-dh)/2,dw,dh); c.restore();}
-  const acc=accentOf(), type=state.t;
+  const acc=hexOf(), type=state.t;
   const g=c.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,H*.85); g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(1,acc+'55'); c.fillStyle=g; c.fillRect(0,0,W,H);
   c.strokeStyle=acc; c.lineWidth=28; rr(c,14,14,W-28,H-28,38); c.stroke();
   [[66,66],[W-66,66],[66,H-66],[W-66,H-66]].forEach((p,i)=>flower2D(c,p[0],p[1],58,i%2?(hex2Of()||acc):acc,type,tm*.4*(i%2?-1:1)+i));
@@ -811,7 +851,7 @@ function drawBooth(c,tm){
 function boothLoop(){booth.raf=requestAnimationFrame(boothLoop); drawBooth(bctx,performance.now()/1000);}
 function resetBooth(){booth.shots=[];booth.busy=false;$('#bThumbs').innerHTML='';$('#bLive').hidden=false;$('#bResult').hidden=true;$('#bCount').textContent='';}
 async function openBooth(){
-  stopMusic(); $('#booth').classList.add('show'); resetBooth(); $('#bMsg').hidden=true;
+  stopMusic(); $('#booth').style.setProperty('--booth-accent',hexOf()); $('#booth').classList.add('show'); resetBooth(); $('#bMsg').hidden=true;
   try{
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia) throw new Error('nocam');
     booth.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:960}},audio:false});
@@ -838,10 +878,10 @@ async function snapThree(){
 }
 function makeStrip(){
   const shots=booth.shots, SW=520, pad=28, sw=SW-pad*2, sh=Math.round(sw*.75), gap=16, foot=140, SH=pad+shots.length*sh+(shots.length-1)*gap+foot;
-  const c=$('#bStrip'); c.width=SW; c.height=SH; const x=c.getContext('2d'), acc=accentOf();
+  const c=$('#bStrip'); c.width=SW; c.height=SH; const x=c.getContext('2d'), acc=hexOf();
   x.fillStyle=lighten(acc,.82); x.fillRect(0,0,SW,SH); x.strokeStyle=acc; x.lineWidth=10; rr(x,5,5,SW-10,SH-10,26); x.stroke();
   shots.forEach((s,i)=>{const y=pad+i*(sh+gap); x.save(); rr(x,pad,y,sw,sh,18); x.clip(); x.drawImage(s,pad,y,sw,sh); x.restore();});
-  flower2D(x,pad+6,pad+2,34,acc,state.t,.3); flower2D(x,SW-pad-6,pad+2,34,acc,state.t,-.2);
+  flower2D(x,pad+6,pad+2,34,acc,state.t,.3); flower2D(x,SW-pad-6,pad+2,34,hex2Of()||acc,state.t,-.2);
   const fy=SH-foot; x.textAlign='center'; x.fillStyle='#2d2233'; x.font='700 48px Caveat, cursive'; x.fillText(state.to?'for '+state.to:'bloomail',SW/2,fy+62);
   x.font='500 22px Fredoka, sans-serif'; x.fillStyle='#85788d';
   x.fillText((state.fr?'from '+state.fr+' · ':'')+new Date().toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}),SW/2,fy+98);

@@ -17,13 +17,17 @@ export default function ShareDialog() {
           </button>
         </div>
         <div className="share-grid">
-          <button id="shareBtn" type="button">
+          {/* <button id="shareBtn" type="button">
             <span className="ic" data-i="share"></span>
             Share
-          </button>
+          </button> */}
           <button id="mailBtn" type="button">
             <span className="ic" data-i="mail"></span>
             Email it
+          </button>
+          <button id="qrBtn" type="button">
+            <span className="ic" data-i="down"></span>
+            Download QR code
           </button>
           <button id="prevBtn" type="button">
             <span className="ic" data-i="eye"></span>
