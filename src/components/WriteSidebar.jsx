@@ -43,8 +43,8 @@ export default function WriteSidebar() {
         <h2><i>7</i> Pick a tune</h2>
         <div className="chips" id="music"></div>
         <label className="field music-link-field">
-          <span>Or paste a Spotify / YouTube link</span>
-          <input id="fMl" placeholder="https://..." autoComplete="off" />
+          <span>Or paste a Spotify link</span>
+          <input id="fMl" placeholder="https://open.spotify.com/..." autoComplete="off" />
           <small id="mlHint"></small>
         </label>
       </section>

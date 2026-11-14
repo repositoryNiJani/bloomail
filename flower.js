@@ -143,9 +143,47 @@ const dec=h=>{try{h=h.replace(/-/g,'+').replace(/_/g,'/');while(h.length%4)h+='=
 const makeLink=()=>location.href.split('#')[0]+'#c='+enc(state);
 function embedFor(url){
   url=(url||'').trim(); if(!url) return null; let m;
-  if((m=url.match(/(?:youtube\.com\/watch\?[^#]*v=|youtu\.be\/|youtube\.com\/shorts\/)([\w-]{6,15})/))) return {src:'https://www.youtube.com/embed/'+m[1]+'?rel=0',h:200};
-  if((m=url.match(/open\.spotify\.com\/(track|album|playlist|episode)\/([A-Za-z0-9]{10,30})/))) return {src:'https://open.spotify.com/embed/'+m[1]+'/'+m[2],h:152};
+  if((m=url.match(/open\.spotify\.com\/(track|album|playlist|episode)\/([A-Za-z0-9]{10,30})/))) return {uri:'spotify:'+m[1]+':'+m[2],src:'https://open.spotify.com/embed/'+m[1]+'/'+m[2],h:152};
   return null;
+}
+let spotifyApiPromise=null, spotifyController=null, spotifyEmbedReady=false, spotifyPlayRequested=false;
+function loadSpotifyIframeApi(){
+  if(!spotifyApiPromise) spotifyApiPromise=new Promise((resolve,reject)=>{
+    window.onSpotifyIframeApiReady=resolve;
+    const script=document.createElement('script');
+    script.src='https://open.spotify.com/embed/iframe-api/v1';
+    script.async=true;
+    script.onerror=()=>reject(new Error('Spotify Embed API failed to load.'));
+    document.head.appendChild(script);
+  });
+  return spotifyApiPromise;
+}
+function requestSpotifyPlayback(){
+  spotifyPlayRequested=true;
+  if(!spotifyController||!spotifyEmbedReady) return;
+  try{spotifyController.play();}
+  catch(error){console.error('Spotify playback could not be started.',error);}
+}
+function mountSpotifyEmbed(box,embed){
+  const target=document.createElement('div'); box.appendChild(target);
+  loadSpotifyIframeApi().then(api=>{
+    if(!target.isConnected) return;
+    api.createController(target,{uri:embed.uri,width:'100%',height:embed.h},controller=>{
+      if(!target.isConnected){controller.destroy();return;}
+      spotifyController=controller;
+      controller.addListener('ready',()=>{
+        spotifyEmbedReady=true;
+        if(spotifyPlayRequested) requestSpotifyPlayback();
+      });
+    });
+  }).catch(error=>{
+    console.error('Spotify Embed API failed to initialize.',error);
+    if(!target.isConnected) return;
+    const frame=document.createElement('iframe');
+    frame.src=embed.src; frame.height=embed.h; frame.allow='autoplay; encrypted-media; clipboard-write';
+    frame.loading='lazy'; frame.referrerPolicy='strict-origin-when-cross-origin';
+    target.replaceWith(frame);
+  });
 }
 const save=()=>{try{localStorage.setItem('petalpost-draft',JSON.stringify(state));}catch(e){}};
 let toastT; function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200);}
@@ -698,7 +736,7 @@ function syncUI(){
   syncTag();
   $('#cnt').textContent=state.msg.length+' / 500';
   const ml=state.ml.trim(), hint=$('#mlHint');
-  hint.textContent=!ml?'':(embedFor(ml)?'Looks good. A player will appear in the letter.':'Hmm, I only know YouTube and Spotify links.');
+  hint.textContent=!ml?'':(embedFor(ml)?'Looks good. A Spotify player will appear in the letter.':'Please use a Spotify track, album, playlist, or episode link.');
 }
 
 /* ============ send sheet ============ */
@@ -765,11 +803,15 @@ function enterReceiver(isPreview){
   $('#letter').classList.remove('show','expanded','closing'); $('#letterToggle').setAttribute('aria-expanded','false'); $('#lEmbed').innerHTML='';
   $('#envFor').textContent=state.to?'A flower for '+state.to:'A flower for you';
   const env=$('#env'); env.classList.remove('open'); const w=$('#envWrap'); w.classList.remove('hide'); w.classList.add('show');
+  spotifyController=null; spotifyEmbedReady=false; spotifyPlayRequested=false;
   const emb=embedFor(state.ml); $('#rxSound').hidden=!!emb||state.mu==='none'; soundIcon();
+  const box=$('#lEmbed'); box.innerHTML='';
+  if(emb) mountSpotifyEmbed(box,emb);
   requestAnimationFrame(resize);
 }
 $('#env').onclick=()=>{
   const env=$('#env'); if(env.classList.contains('open')) return; env.classList.add('open');
+  if(embedFor(state.ml)) requestSpotifyPlayback();
   setTimeout(()=>{
     $('#envWrap').classList.add('hide');
     if(!embedFor(state.ml)&&state.mu!=='none') startMusic(state.mu);
@@ -783,8 +825,6 @@ function showLetter(){
   $('#lTo').textContent=state.to?'Dear '+state.to+',':'Hello you,';
   $('#lFrom').textContent=state.fr?'- '+state.fr:'';
   $('#letter').classList.add('show'); typeInto($('#lMsg'),state.msg.trim()||'Someone thought of you today.');
-  const emb=embedFor(state.ml), box=$('#lEmbed'); box.innerHTML='';
-  if(emb){const f=document.createElement('iframe'); f.src=emb.src; f.height=emb.h; f.allow='autoplay; encrypted-media; clipboard-write'; f.loading='lazy'; f.referrerPolicy='strict-origin-when-cross-origin'; box.appendChild(f);}
   shower();
 }
 function closeLetter(){
