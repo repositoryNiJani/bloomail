@@ -133,7 +133,7 @@ function sanitize(o){
   if(RIBBONS.some(r=>r.id===o.rc)) s.rc=o.rc;
   if(RSTYLES.some(r=>r.id===o.rs)) s.rs=o.rs;
   ['bf','sp'].forEach(k=>{s[k]=o[k]===0?0:1;});
-  s.to=String(o.to||'').slice(0,40); s.fr=String(o.fr||'').slice(0,40); s.msg=String(o.msg||'').slice(0,500); s.oc=String(o.oc||'').slice(0,30);
+  s.to=String(o.to||'').slice(0,40); s.fr=String(o.fr||'').slice(0,40); s.msg=String(o.msg||'').slice(0,1000); s.oc=String(o.oc||'').slice(0,30);
   s.mu=(o.mu==='none'||TRACKS[o.mu])?o.mu:'musicbox'; s.ml=String(o.ml||'').slice(0,200);
   return s;
 }
@@ -760,7 +760,7 @@ function syncUI(){
   $$('#occ .chip[data-oc]').forEach(b=>b.setAttribute('aria-pressed',String(!custom&&b.dataset.oc===state.oc)));
   $('#ocCustom').setAttribute('aria-pressed',String(custom)); $('#grpOc').hidden=!custom;
   syncTag();
-  $('#cnt').textContent=state.msg.length+' / 500';
+  $('#cnt').textContent=state.msg.length+' / 1000';
   const ml=state.ml.trim(), hint=$('#mlHint');
   hint.textContent=!ml?'':(embedFor(ml)?'Looks good. A Spotify player will appear in the letter.':'Please use a Spotify track, album, playlist, or episode link.');
 }
