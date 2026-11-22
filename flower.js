@@ -138,8 +138,46 @@ function sanitize(o){
   return s;
 }
 /* the whole card lives inside the link, so no server or account is needed */
-const enc=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-const dec=h=>{try{h=h.replace(/-/g,'+').replace(/_/g,'/');while(h.length%4)h+='=';return JSON.parse(decodeURIComponent(escape(atob(h))));}catch(e){return null;}};
+const ENUM_IDS=[
+  FLOWERS.map(f=>f.id), COLORS.map(c=>c.id), COLORS.map(c=>c.id),
+  MODES.map(m=>m.id), BOUQUET_LAYOUTS.map(l=>l.id), GARDEN_LAYOUTS.map(l=>l.id),
+  WRAPS.map(w=>w.id), RIBBONS.map(r=>r.id), RSTYLES.map(r=>r.id)
+];
+const enc=o=>{
+  const keys=['t','c','c2','m','bt','gt','wc','rc','rs','bf','sp','bc','oc','to','fr','msg','mu','ml'];
+  const changes=[];
+  keys.forEach((key,index)=>{
+    if(JSON.stringify(o[key])===JSON.stringify(DEFAULT[key])) return;
+    let value=o[key];
+    if(index<9){
+      const enumIndex=ENUM_IDS[index].indexOf(value);
+      if(enumIndex>=0) value=enumIndex;
+    }else if(key==='bc' && Array.isArray(value)){
+      value=value.map(color=>/^#[0-9a-f]{6}$/i.test(color||'')?color.slice(1):DEFAULT.bc[changes.length%4].slice(1)).join('');
+    }
+    changes.push([index,value]);
+  });
+  const compact=JSON.stringify(changes);
+  return btoa(unescape(encodeURIComponent(compact))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+};
+const dec=h=>{try{
+  h=h.replace(/-/g,'+').replace(/_/g,'/');while(h.length%4)h+='=';
+  const decoded=JSON.parse(decodeURIComponent(escape(atob(h))));
+  if(!Array.isArray(decoded)) return decoded;
+  const keys=['t','c','c2','m','bt','gt','wc','rc','rs','bf','sp','bc','oc','to','fr','msg','mu','ml'];
+  const o={...DEFAULT,bc:DEFAULT.bc.slice()};
+  decoded.forEach(([index,value])=>{
+    if(index<0||index>=keys.length) return;
+    const key=keys[index];
+    if(index<9 && typeof value==='number') value=ENUM_IDS[index][value];
+    if(key==='bc' && typeof value==='string' && value.length===24){
+      o.bc=value.match(/.{6}/g).map(color=>'#'+color);
+    }else{
+      o[key]=value;
+    }
+  });
+  return o;
+}catch(e){return null;}};
 const makeLink=()=>location.href.split('#')[0]+'#c='+enc(state);
 function embedFor(url){
   url=(url||'').trim(); if(!url) return null;
@@ -772,7 +810,7 @@ async function copyText(t){
 }
 function openSheet(){
   stopMusic(); const url=makeLink(); $('#linkOut').value=url;
-  $('#lenWarn').textContent=url.length>1800?'This link is quite long. Some apps may cut it, so try a shorter message.':'';
+  $('#lenWarn').textContent=url.length>1200?'This link is quite long. Some apps may cut it, so try a shorter message.':'';
   $('#sheet').classList.add('show');
 }
 const closeSheet=()=>$('#sheet').classList.remove('show');

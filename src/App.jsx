@@ -26,7 +26,7 @@ export default function App() {
       <div className="welcome" role="status" aria-label="Welcome to bloomail">
         <div className="welcome-card">
           <span className="welcome-logo" aria-hidden="true">
-            <img src="/bloomail-logo.svg" alt="" />
+            <img src="/bloomail-logo.png" alt="" />
           </span>
           <strong>bloomail</strong>
           <small>Send a flower, say it softer.</small>

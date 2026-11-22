@@ -13,9 +13,8 @@ input,textarea{font:inherit;color:inherit}
 .app{height:100dvh;display:grid;grid-template-columns:minmax(292px,320px) minmax(0,1fr) minmax(292px,320px);gap:16px;padding:16px}
 .welcome{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#fff 0,#fff3f6 55%,#f2eaff 100%);pointer-events:none;animation:welcomeFade 2.2s ease-in-out forwards}
 .welcome-card{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--ink);animation:welcomeLift .7s cubic-bezier(.2,.8,.2,1) both}
-.welcome-logo{width:72px;height:72px;display:grid;place-items:center;border-radius:24px;background:var(--ink);transform:rotate(-6deg);
-  box-shadow:0 10px 24px rgba(45,34,51,.18)}
-.welcome-logo img{width:48px;height:48px}
+.welcome-logo{width:72px;height:72px;display:grid;place-items:center;transform:rotate(-6deg)}
+.welcome-logo img{width:72px;height:auto;object-fit:contain}
 .welcome-card strong{font-size:34px;letter-spacing:-.6px}
 .welcome-card small{font-size:14px;color:var(--muted)}
 @keyframes welcomeFade{0%{opacity:0}18%,68%{opacity:1}100%{opacity:0;visibility:hidden}}
@@ -36,8 +35,8 @@ body.receiving .app{opacity:1;animation:none}
 .github-stars-status{min-height:1.2em;margin:10px 0 0;color:var(--muted);font-size:12px}
 @keyframes panelflash{0%{box-shadow:0 0 0 0 var(--accent)}40%{box-shadow:0 0 0 8px color-mix(in srgb,var(--accent) 40%,transparent)}100%{box-shadow:0 12px 40px rgba(120,80,120,.12)}}
 .brand{display:flex;align-items:center;gap:10px;flex:none}
-.logo{width:44px;height:44px;border-radius:16px;background:var(--ink);display:grid;place-items:center;transform:rotate(-6deg);flex:none}
-.logo img{width:28px;height:28px}
+.logo{width:44px;height:44px;display:grid;place-items:center;transform:rotate(-6deg);flex:none}
+.logo img{width:44px;height:auto;object-fit:contain}
 .brand b{font-size:22px;letter-spacing:-.3px;display:block;line-height:1}
 .brand small{color:var(--muted);font-size:12.5px}
 h2{margin:0 0 14px;font-size:12.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:600;display:flex;gap:8px;align-items:center}

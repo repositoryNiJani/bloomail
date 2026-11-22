@@ -6,7 +6,7 @@ export default function DesignSidebar() {
     <aside className="panel panel-design" id="pDesign">
       <div className="brand">
         <div className="logo">
-          <img src="/bloomail-logo.svg" alt="" />
+          <img src="/bloomail-logo.png" alt="" />
         </div>
         <div>
           <b>bloomail</b>
